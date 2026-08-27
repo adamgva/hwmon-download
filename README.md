@@ -1,3 +1,3 @@
-# HWMon downloads
+# HWMon recovery downloads
 
-Official Windows release downloads and extension-neutral mirrors for HWMon. Each release includes its signed update manifest and SHA-256 digest.
+These public assets are for OTA updates and recovery on an already-enrolled HWMon host. A fresh machine uses the separately encrypted fleet installer, which is never published in plaintext.
