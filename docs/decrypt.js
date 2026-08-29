@@ -4,7 +4,6 @@ import {
   pinnedTransferRequestFromSearch,
   transferKeyFromFragment,
   validatePinnedTransferMetadata,
-  validateTransferMetadata,
 } from './transfer-crypto.mjs';
 
 const MAX_METADATA_TEXT = 64 * 1024;
@@ -133,7 +132,7 @@ downloadButton.addEventListener('click', async () => {
   downloadButton.disabled = true;
   setStatus('Downloading and authenticating encrypted installer...');
   try {
-    const normalized = validateTransferMetadata(transferMetadata);
+    const normalized = validatePinnedTransferMetadata(transferMetadata, transferRequest);
     const payload = await loadEncryptedPayload(normalized);
     const result = await decryptTransfer(transferMetadata, payload, transferKey);
     const blob = new Blob([result.plaintext], {
