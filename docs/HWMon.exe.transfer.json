@@ -3,15 +3,15 @@
   "format_version": 1,
   "cipher": {
     "name": "AES-256-GCM",
-    "nonce_base64url": "pZnZK5nNYEj1Lv_E",
+    "nonce_base64url": "cL_KLqHAHtB4naOR",
     "tag_bits": 128
   },
-  "authenticated_metadata_base64url": "eyJmb3JtYXQiOiJod21vbi1wcml2YXRlLWluc3RhbGxlci10cmFuc2ZlciIsImZvcm1hdF92ZXJzaW9uIjoxLCJjaXBoZXIiOiJBRVMtMjU2LUdDTSIsInRhZ19iaXRzIjoxMjgsInBsYWludGV4dF9maWxlIjoiSFdNb24uZXhlIiwicGxhaW50ZXh0X3ZlcnNpb24iOiIyLjEuMTUiLCJwbGFpbnRleHRfYnl0ZXMiOjE3MTY1MzEyLCJwbGFpbnRleHRfc2hhMjU2IjoiMzIxNzI0ODUxODhkNjk4NzM2Y2Y3MGFhYjJhZDM3Njg5NWNjYmIxOTgyZTI0MTZkNDBmYmQyYjM3NWIzYWZmYyIsImNpcGhlcnRleHRfYnl0ZXMiOjE3MTY1MzI4fQ",
+  "authenticated_metadata_base64url": "eyJmb3JtYXQiOiJod21vbi1wcml2YXRlLWluc3RhbGxlci10cmFuc2ZlciIsImZvcm1hdF92ZXJzaW9uIjoxLCJjaXBoZXIiOiJBRVMtMjU2LUdDTSIsInRhZ19iaXRzIjoxMjgsInBsYWludGV4dF9maWxlIjoiSFdNb24uZXhlIiwicGxhaW50ZXh0X3ZlcnNpb24iOiIyLjEuMTciLCJwbGFpbnRleHRfYnl0ZXMiOjE3MjA4ODMyLCJwbGFpbnRleHRfc2hhMjU2IjoiODk4NDc3MGFiN2Q5YTk3NzJkNTUwMjU2MDBjZDE2OGQyMTBjMTJmMjMzOGJjYTNmN2I3NzhiNzMyYjQwN2VjOSIsImNpcGhlcnRleHRfYnl0ZXMiOjE3MjA4ODQ4fQ",
   "plaintext": {
     "file": "HWMon.exe",
-    "version": "2.1.15",
-    "bytes": 17165312,
-    "sha256": "32172485188d698736cf70aab2ad376895ccbb1982e2416d40fbd2b375b3affc"
+    "version": "2.1.17",
+    "bytes": 17208832,
+    "sha256": "8984770ab7d9a9772d55025600cd168d210c12f2338bca3f7b778b732b407ec9"
   },
   "payload": {
     "encoding": "base64url",
@@ -21,6 +21,6 @@
       "https://agalyoon-connect-sjc.fly.dev/download/installer/HWMon.exe.enc.txt",
       "https://agalyoon-connect.fly.dev/download/installer/HWMon.exe.enc.txt"
     ],
-    "ciphertext_bytes": 17165328
+    "ciphertext_bytes": 17208848
   }
 }
