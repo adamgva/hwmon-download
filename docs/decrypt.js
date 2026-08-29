@@ -1,7 +1,9 @@
 import {
   TransferError,
   decryptTransfer,
+  pinnedTransferRequestFromSearch,
   transferKeyFromFragment,
+  validatePinnedTransferMetadata,
   validateTransferMetadata,
 } from './transfer-crypto.mjs';
 
@@ -14,6 +16,7 @@ const downloadButton = document.querySelector('#decrypt-download');
 
 let transferKey;
 let transferMetadata;
+let transferRequest;
 let manifestURL;
 
 function setStatus(message, isError = false) {
@@ -80,13 +83,7 @@ async function fetchText(url, maximumBytes) {
 }
 
 async function loadMetadata() {
-  const parameters = new URLSearchParams(location.search);
-  if (parameters.getAll('manifest').length > 1) {
-    throw new TransferError('only one transfer metadata URL is allowed');
-  }
-  const requested = parameters.get('manifest')
-    || './HWMon.exe.transfer.json';
-  const requestedURL = allowedHTTPSURL(requested, location.href);
+  const requestedURL = allowedHTTPSURL(transferRequest.manifest, location.href);
   const { text, responseURL } = await fetchText(requestedURL, MAX_METADATA_TEXT);
   let metadata;
   try {
@@ -94,7 +91,7 @@ async function loadMetadata() {
   } catch {
     throw new TransferError('transfer metadata is not valid JSON');
   }
-  const normalized = validateTransferMetadata(metadata);
+  const normalized = validatePinnedTransferMetadata(metadata, transferRequest);
   transferMetadata = metadata;
   manifestURL = responseURL;
   versionElement.textContent = normalized.plaintext.version;
@@ -118,8 +115,10 @@ async function loadEncryptedPayload(normalized) {
 
 async function initialize() {
   try {
-    transferKey = transferKeyFromFragment(location.hash);
+    const fragment = location.hash;
     history.replaceState(null, '', `${location.pathname}${location.search}`);
+    transferKey = transferKeyFromFragment(fragment);
+    transferRequest = pinnedTransferRequestFromSearch(location.search);
     await loadMetadata();
     downloadButton.disabled = false;
     setStatus('Encrypted installer ready. Decryption stays in this browser.');

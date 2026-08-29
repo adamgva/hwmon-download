@@ -42,6 +42,13 @@ function validateVersion(value) {
   return value;
 }
 
+function validateSHA256(value) {
+  if (typeof value !== 'string' || !/^[0-9a-f]{64}$/.test(value)) {
+    fail('installer SHA-256 is invalid');
+  }
+  return value;
+}
+
 function validateFileName(value, extension) {
   if (
     typeof value !== 'string'
@@ -96,6 +103,32 @@ export function transferKeyFromFragment(fragment) {
   return key;
 }
 
+export function pinnedTransferRequestFromSearch(search) {
+  if (typeof search !== 'string' || !search.startsWith('?')) {
+    fail('the URL query must contain exactly one manifest, version, and sha256 value');
+  }
+  const parameters = new URLSearchParams(search.slice(1));
+  const allowedNames = new Set(['manifest', 'version', 'sha256']);
+  const names = [...parameters.keys()];
+  if (
+    names.length !== allowedNames.size
+    || names.some((name) => !allowedNames.has(name))
+    || [...allowedNames].some((name) => parameters.getAll(name).length !== 1)
+  ) {
+    fail('the URL query must contain exactly one manifest, version, and sha256 value');
+  }
+
+  const manifest = parameters.get('manifest');
+  if (typeof manifest !== 'string' || manifest.length === 0 || manifest.length > 2048) {
+    fail('transfer metadata URL is invalid');
+  }
+  return {
+    manifest,
+    version: validateVersion(parameters.get('version')),
+    sha256: validateSHA256(parameters.get('sha256')),
+  };
+}
+
 export function validateTransferMetadata(metadata) {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
     fail('transfer metadata is invalid');
@@ -121,7 +154,7 @@ export function validateTransferMetadata(metadata) {
     file: validateFileName(plaintext.file, '.exe'),
     version: validateVersion(plaintext.version),
     bytes: plaintext.bytes,
-    sha256: plaintext.sha256,
+    sha256: validateSHA256(plaintext.sha256),
   };
   if (
     !Number.isSafeInteger(normalizedPlaintext.bytes)
@@ -130,13 +163,6 @@ export function validateTransferMetadata(metadata) {
   ) {
     fail('installer byte count is invalid');
   }
-  if (
-    typeof normalizedPlaintext.sha256 !== 'string'
-    || !/^[0-9a-f]{64}$/.test(normalizedPlaintext.sha256)
-  ) {
-    fail('installer SHA-256 is invalid');
-  }
-
   const payload = metadata.payload;
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     fail('encrypted payload metadata is missing');
@@ -188,6 +214,22 @@ export function validateTransferMetadata(metadata) {
       ciphertextBytes: payload.ciphertext_bytes,
     },
   };
+}
+
+export function validatePinnedTransferMetadata(metadata, request) {
+  if (!request || typeof request !== 'object' || Array.isArray(request)) {
+    fail('private link installer pins are invalid');
+  }
+  const expectedVersion = validateVersion(request.version);
+  const expectedSHA256 = validateSHA256(request.sha256);
+  const normalized = validateTransferMetadata(metadata);
+  if (normalized.plaintext.version !== expectedVersion) {
+    fail('transfer metadata version does not match this private link');
+  }
+  if (normalized.plaintext.sha256 !== expectedSHA256) {
+    fail('transfer metadata SHA-256 does not match this private link');
+  }
+  return normalized;
 }
 
 export function decodePayloadText(value, expectedBytes) {

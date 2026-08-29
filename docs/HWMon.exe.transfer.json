@@ -3,15 +3,15 @@
   "format_version": 1,
   "cipher": {
     "name": "AES-256-GCM",
-    "nonce_base64url": "0Hhsz65C0-bTk60X",
+    "nonce_base64url": "pZnZK5nNYEj1Lv_E",
     "tag_bits": 128
   },
-  "authenticated_metadata_base64url": "eyJmb3JtYXQiOiJod21vbi1wcml2YXRlLWluc3RhbGxlci10cmFuc2ZlciIsImZvcm1hdF92ZXJzaW9uIjoxLCJjaXBoZXIiOiJBRVMtMjU2LUdDTSIsInRhZ19iaXRzIjoxMjgsInBsYWludGV4dF9maWxlIjoiSFdNb24uZXhlIiwicGxhaW50ZXh0X3ZlcnNpb24iOiIyLjEuMTEiLCJwbGFpbnRleHRfYnl0ZXMiOjE3MTU5NjgwLCJwbGFpbnRleHRfc2hhMjU2IjoiOGM5ZGRkZWNiMzMyNGE4NDI1MWM5NzA5NjNiMzNhYmRiYTNmYTViZTE1ZWJhNzEyYWViNzhiNzVmN2M5OTNhYyIsImNpcGhlcnRleHRfYnl0ZXMiOjE3MTU5Njk2fQ",
+  "authenticated_metadata_base64url": "eyJmb3JtYXQiOiJod21vbi1wcml2YXRlLWluc3RhbGxlci10cmFuc2ZlciIsImZvcm1hdF92ZXJzaW9uIjoxLCJjaXBoZXIiOiJBRVMtMjU2LUdDTSIsInRhZ19iaXRzIjoxMjgsInBsYWludGV4dF9maWxlIjoiSFdNb24uZXhlIiwicGxhaW50ZXh0X3ZlcnNpb24iOiIyLjEuMTUiLCJwbGFpbnRleHRfYnl0ZXMiOjE3MTY1MzEyLCJwbGFpbnRleHRfc2hhMjU2IjoiMzIxNzI0ODUxODhkNjk4NzM2Y2Y3MGFhYjJhZDM3Njg5NWNjYmIxOTgyZTI0MTZkNDBmYmQyYjM3NWIzYWZmYyIsImNpcGhlcnRleHRfYnl0ZXMiOjE3MTY1MzI4fQ",
   "plaintext": {
     "file": "HWMon.exe",
-    "version": "2.1.11",
-    "bytes": 17159680,
-    "sha256": "8c9dddecb3324a84251c970963b33abdba3fa5be15eba712aeb78b75f7c993ac"
+    "version": "2.1.15",
+    "bytes": 17165312,
+    "sha256": "32172485188d698736cf70aab2ad376895ccbb1982e2416d40fbd2b375b3affc"
   },
   "payload": {
     "encoding": "base64url",
@@ -19,10 +19,8 @@
     "urls": [
       "HWMon.exe.enc.txt",
       "https://agalyoon-connect-sjc.fly.dev/download/installer/HWMon.exe.enc.txt",
-      "https://agalyoon-connect.fly.dev/download/installer/HWMon.exe.enc.txt",
-      "https://github.com/adamgva/hwmon-download/releases/download/2.1.11/HWMon.exe.enc.txt",
-      "https://adamgva.github.io/hwmon-download/HWMon.exe.enc.txt"
+      "https://agalyoon-connect.fly.dev/download/installer/HWMon.exe.enc.txt"
     ],
-    "ciphertext_bytes": 17159696
+    "ciphertext_bytes": 17165328
   }
 }
