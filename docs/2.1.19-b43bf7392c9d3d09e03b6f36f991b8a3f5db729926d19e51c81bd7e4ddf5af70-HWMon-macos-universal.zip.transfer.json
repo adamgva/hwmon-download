@@ -1,0 +1,27 @@
+{
+  "format": "hwmon-private-installer-transfer",
+  "format_version": 1,
+  "cipher": {
+    "name": "AES-256-GCM",
+    "nonce_base64url": "cuZRa-2mHikCghuq",
+    "tag_bits": 128
+  },
+  "authenticated_metadata_base64url": "eyJmb3JtYXQiOiJod21vbi1wcml2YXRlLWluc3RhbGxlci10cmFuc2ZlciIsImZvcm1hdF92ZXJzaW9uIjoxLCJjaXBoZXIiOiJBRVMtMjU2LUdDTSIsInRhZ19iaXRzIjoxMjgsInBsYWludGV4dF9maWxlIjoiSFdNb24tbWFjb3MtdW5pdmVyc2FsLnppcCIsInBsYWludGV4dF92ZXJzaW9uIjoiMi4xLjE5IiwicGxhaW50ZXh0X2J5dGVzIjoxNDgyMzExNSwicGxhaW50ZXh0X3NoYTI1NiI6ImI0M2JmNzM5MmM5ZDNkMDllMDNiNmYzNmY5OTFiOGEzZjVkYjcyOTkyNmQxOWU1MWM4MWJkN2U0ZGRmNWFmNzAiLCJjaXBoZXJ0ZXh0X2J5dGVzIjoxNDgyMzEzMX0",
+  "plaintext": {
+    "file": "HWMon-macos-universal.zip",
+    "version": "2.1.19",
+    "bytes": 14823115,
+    "sha256": "b43bf7392c9d3d09e03b6f36f991b8a3f5db729926d19e51c81bd7e4ddf5af70"
+  },
+  "payload": {
+    "encoding": "base64url",
+    "file": "HWMon-macos-universal.zip.enc.txt",
+    "urls": [
+      "HWMon-macos-universal.zip.enc.txt",
+      "https://agalyoon-connect-sjc.fly.dev/download/installer/HWMon-macos-universal.zip.enc.txt",
+      "https://agalyoon-connect.fly.dev/download/installer/HWMon-macos-universal.zip.enc.txt",
+      "https://agalyoon-remote-connect.fly.dev/download/installer/HWMon-macos-universal.zip.enc.txt"
+    ],
+    "ciphertext_bytes": 14823131
+  }
+}

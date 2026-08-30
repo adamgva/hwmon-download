@@ -1,7 +1,10 @@
 import {
   TransferError,
   decryptTransfer,
+  fetchTextWithIdleTimeout,
+  immutableFirstTransferURLs,
   pinnedTransferRequestFromSearch,
+  trustedInstallerTransferURLs,
   transferKeyFromFragment,
   validatePinnedTransferMetadata,
 } from './transfer-crypto.mjs';
@@ -37,74 +40,67 @@ function allowedHTTPSURL(value, baseURL) {
 }
 
 async function fetchText(url, maximumBytes) {
-  const response = await fetch(url, {
-    cache: 'no-store',
-    credentials: 'omit',
-    redirect: 'follow',
-    referrerPolicy: 'no-referrer',
-  });
-  if (!response.ok) throw new TransferError(`download returned HTTP ${response.status}`);
-  const responseURL = allowedHTTPSURL(response.url || url, url);
-  const declaredLength = Number(response.headers.get('Content-Length'));
-  if (Number.isFinite(declaredLength) && declaredLength > maximumBytes) {
-    throw new TransferError('download is larger than authenticated metadata permits');
-  }
-  if (!response.body) throw new TransferError('download returned no response body');
-  const reader = response.body.getReader();
-  const chunks = [];
-  let receivedBytes = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      receivedBytes += value.byteLength;
-      if (receivedBytes > maximumBytes) {
-        await reader.cancel();
-        throw new TransferError('download is larger than authenticated metadata permits');
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const bytes = new Uint8Array(receivedBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  let text;
-  try {
-    text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-  } catch {
-    throw new TransferError('download is not valid UTF-8 text');
-  }
-  return { text, responseURL };
+  const { text, responseURL } = await fetchTextWithIdleTimeout(url, maximumBytes);
+  return { text, responseURL: allowedHTTPSURL(responseURL, url) };
 }
 
 async function loadMetadata() {
   const requestedURL = allowedHTTPSURL(transferRequest.manifest, location.href);
-  const { text, responseURL } = await fetchText(requestedURL, MAX_METADATA_TEXT);
-  let metadata;
-  try {
-    metadata = JSON.parse(text);
-  } catch {
-    throw new TransferError('transfer metadata is not valid JSON');
+  const stableMetadataFiles = [
+    'HWMon.exe.transfer.json',
+    'HWMon-macos-universal.zip.transfer.json',
+  ];
+  const requestedLeaf = requestedURL.pathname.split('/').at(-1);
+  const stableMetadataFile = stableMetadataFiles.find(
+    (file) => requestedLeaf === file || requestedLeaf.endsWith(`-${file}`),
+  );
+  if (!stableMetadataFile) {
+    throw new TransferError('transfer metadata URL does not identify a HWMon host');
   }
-  const normalized = validatePinnedTransferMetadata(metadata, transferRequest);
-  transferMetadata = metadata;
-  manifestURL = responseURL;
-  titleElement.textContent = `Download the ${normalized.plaintext.label}`;
-  downloadButton.textContent = `Decrypt and download ${normalized.plaintext.file}`;
-  versionElement.textContent = normalized.plaintext.version;
-  hashElement.textContent = normalized.plaintext.sha256;
-  sizeElement.textContent = `${normalized.plaintext.bytes.toLocaleString()} bytes`;
+  const candidates = trustedInstallerTransferURLs(
+    requestedURL.toString(),
+    location.href,
+    transferRequest.version,
+    transferRequest.sha256,
+    stableMetadataFile,
+  ).map((candidate) => allowedHTTPSURL(candidate, location.href));
+  let lastFailure;
+  for (const candidate of candidates) {
+    try {
+      const { text, responseURL } = await fetchText(candidate, MAX_METADATA_TEXT);
+      let metadata;
+      try {
+        metadata = JSON.parse(text);
+      } catch {
+        throw new TransferError('transfer metadata is not valid JSON');
+      }
+      const normalized = validatePinnedTransferMetadata(metadata, transferRequest);
+      transferMetadata = metadata;
+      manifestURL = responseURL;
+      titleElement.textContent = `Download the ${normalized.plaintext.label}`;
+      downloadButton.textContent = `Decrypt and download ${normalized.plaintext.file}`;
+      versionElement.textContent = normalized.plaintext.version;
+      hashElement.textContent = normalized.plaintext.sha256;
+      sizeElement.textContent = `${normalized.plaintext.bytes.toLocaleString()} bytes`;
+      return;
+    } catch (error) {
+      lastFailure = error;
+    }
+  }
+  throw lastFailure || new TransferError('no transfer metadata mirror is available');
 }
 
 async function loadEncryptedPayload(normalized) {
   const maximumTextBytes = Math.ceil((normalized.payload.ciphertextBytes * 4) / 3) + 2;
+  const candidates = immutableFirstTransferURLs(
+    [normalized.payload.file, ...normalized.payload.urls],
+    manifestURL,
+    normalized.plaintext.version,
+    normalized.plaintext.sha256,
+    normalized.payload.file,
+  );
   let lastFailure;
-  for (const candidate of normalized.payload.urls) {
+  for (const candidate of candidates) {
     try {
       const url = allowedHTTPSURL(candidate, manifestURL);
       return (await fetchText(url, maximumTextBytes)).text;

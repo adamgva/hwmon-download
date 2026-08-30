@@ -3,6 +3,7 @@ const FORMAT_VERSION = 1;
 const CIPHER = 'AES-256-GCM';
 const TAG_BYTES = 16;
 const MAX_PLAINTEXT_BYTES = 256 * 1024 * 1024;
+const DOWNLOAD_IDLE_TIMEOUT_MILLISECONDS = 12_000;
 
 export class TransferError extends Error {}
 
@@ -60,6 +61,209 @@ function validateFileName(value, extension) {
     fail(`installer ${extension} file name is invalid`);
   }
   return value;
+}
+
+const TRANSFER_RESOURCE_FILES = new Set([
+  'HWMon.exe.enc.txt',
+  'HWMon.exe.transfer.json',
+  'HWMon-macos-universal.zip.enc.txt',
+  'HWMon-macos-universal.zip.transfer.json',
+]);
+
+export const TRUSTED_INSTALLER_TRANSFER_DIRECTORIES = Object.freeze([
+  'https://adamgva.github.io/hwmon-download/',
+  'https://agalyoon-connect-sjc.fly.dev/download/installer/',
+  'https://agalyoon-connect.fly.dev/download/installer/',
+  'https://agalyoon-remote-connect.fly.dev/download/installer/',
+]);
+
+export function immutableTransferFileName(version, sha256, stableFileName) {
+  const normalizedVersion = validateVersion(version);
+  const normalizedSHA256 = validateSHA256(sha256);
+  if (!TRANSFER_RESOURCE_FILES.has(stableFileName)) {
+    fail('transfer resource file name is invalid');
+  }
+  return `${normalizedVersion}-${normalizedSHA256}-${stableFileName}`;
+}
+
+export function immutableTransferURL(value, baseURL, version, sha256, stableFileName) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 2048) {
+    fail('transfer resource URL is invalid');
+  }
+  const immutableFileName = immutableTransferFileName(
+    version,
+    sha256,
+    stableFileName,
+  );
+  let url;
+  try {
+    url = new URL(value, baseURL);
+  } catch {
+    fail('transfer resource URL is invalid');
+  }
+  if (url.username || url.password || url.hash) {
+    fail('transfer resource URL contains credentials or a fragment');
+  }
+  const components = url.pathname.split('/');
+  const leaf = components.at(-1);
+  if (leaf === stableFileName) {
+    components[components.length - 1] = immutableFileName;
+    url.pathname = components.join('/');
+  } else if (leaf !== immutableFileName) {
+    fail('transfer resource URL does not identify the expected file');
+  }
+  return url.toString();
+}
+
+export function immutableFirstTransferURLs(values, baseURL, version, sha256, stableFileName) {
+  if (!Array.isArray(values) || values.length === 0 || values.length > 17) {
+    fail('transfer resource URL list is invalid');
+  }
+  const immutable = [];
+  const stable = [];
+  for (const value of values) {
+    try {
+      immutable.push(immutableTransferURL(
+        value,
+        baseURL,
+        version,
+        sha256,
+        stableFileName,
+      ));
+    } catch {
+      // Keep nonstandard authenticated-payload mirrors as stable fallbacks.
+    }
+    stable.push(value);
+  }
+  return [...new Set([...immutable, ...stable])];
+}
+
+export function trustedInstallerTransferURLs(
+  requestedURL,
+  baseURL,
+  version,
+  sha256,
+  stableFileName,
+) {
+  return immutableFirstTransferURLs(
+    [
+      requestedURL,
+      ...TRUSTED_INSTALLER_TRANSFER_DIRECTORIES.map(
+        (directory) => new URL(stableFileName, directory).toString(),
+      ),
+    ],
+    baseURL,
+    version,
+    sha256,
+    stableFileName,
+  );
+}
+
+export async function fetchTextWithIdleTimeout(
+  url,
+  maximumBytes,
+  {
+    fetchFunction = globalThis.fetch,
+    idleTimeoutMilliseconds = DOWNLOAD_IDLE_TIMEOUT_MILLISECONDS,
+  } = {},
+) {
+  if (!Number.isSafeInteger(maximumBytes) || maximumBytes <= 0) {
+    fail('download byte limit is invalid');
+  }
+  if (
+    !Number.isSafeInteger(idleTimeoutMilliseconds)
+    || idleTimeoutMilliseconds <= 0
+    || idleTimeoutMilliseconds > 60_000
+  ) {
+    fail('download idle timeout is invalid');
+  }
+  if (typeof fetchFunction !== 'function') fail('download fetch function is unavailable');
+
+  const controller = new AbortController();
+  let deadline;
+  let deadlineExpired = false;
+  let deadlineTimer;
+  function resetDeadline() {
+    clearTimeout(deadlineTimer);
+    deadlineExpired = false;
+    deadline = new Promise((_, reject) => {
+      deadlineTimer = setTimeout(() => {
+        deadlineExpired = true;
+        controller.abort();
+        reject(new TransferError('download timed out waiting for network data'));
+      }, idleTimeoutMilliseconds);
+    });
+  }
+  async function waitForProgress(operation) {
+    try {
+      return await Promise.race([operation, deadline]);
+    } catch (error) {
+      if (deadlineExpired) {
+        throw new TransferError('download timed out waiting for network data');
+      }
+      throw error;
+    }
+  }
+
+  let reader;
+  try {
+    // Fetch headers and the first body byte share one deadline. Only a non-empty
+    // body chunk resets it, so a response that stalls after headers still falls back.
+    resetDeadline();
+    const response = await waitForProgress(fetchFunction(url, {
+      cache: 'no-store',
+      credentials: 'omit',
+      redirect: 'follow',
+      referrerPolicy: 'no-referrer',
+      signal: controller.signal,
+    }));
+    if (!response.ok) fail(`download returned HTTP ${response.status}`);
+    const declaredLength = Number(response.headers.get('Content-Length'));
+    if (Number.isFinite(declaredLength) && declaredLength > maximumBytes) {
+      fail('download is larger than authenticated metadata permits');
+    }
+    if (!response.body) fail('download returned no response body');
+    reader = response.body.getReader();
+    const chunks = [];
+    let receivedBytes = 0;
+    while (true) {
+      const { done, value } = await waitForProgress(reader.read());
+      if (done) break;
+      if (value.byteLength === 0) continue;
+      receivedBytes += value.byteLength;
+      if (receivedBytes > maximumBytes) {
+        controller.abort();
+        fail('download is larger than authenticated metadata permits');
+      }
+      chunks.push(value);
+      resetDeadline();
+    }
+    const bytes = new Uint8Array(receivedBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    let text;
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch {
+      fail('download is not valid UTF-8 text');
+    }
+    return { text, responseURL: response.url || url };
+  } catch (error) {
+    controller.abort();
+    throw error;
+  } finally {
+    clearTimeout(deadlineTimer);
+    if (reader) {
+      try {
+        reader.releaseLock();
+      } catch {
+        // An aborted fetch may reject its pending read just after this function returns.
+      }
+    }
+  }
 }
 
 function validateHostArtifact(value) {

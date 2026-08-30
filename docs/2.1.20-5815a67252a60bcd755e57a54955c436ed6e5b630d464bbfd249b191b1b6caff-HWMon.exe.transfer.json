@@ -1,0 +1,27 @@
+{
+  "format": "hwmon-private-installer-transfer",
+  "format_version": 1,
+  "cipher": {
+    "name": "AES-256-GCM",
+    "nonce_base64url": "G77NBPCUHLsCyFIy",
+    "tag_bits": 128
+  },
+  "authenticated_metadata_base64url": "eyJmb3JtYXQiOiJod21vbi1wcml2YXRlLWluc3RhbGxlci10cmFuc2ZlciIsImZvcm1hdF92ZXJzaW9uIjoxLCJjaXBoZXIiOiJBRVMtMjU2LUdDTSIsInRhZ19iaXRzIjoxMjgsInBsYWludGV4dF9maWxlIjoiSFdNb24uZXhlIiwicGxhaW50ZXh0X3ZlcnNpb24iOiIyLjEuMjAiLCJwbGFpbnRleHRfYnl0ZXMiOjE3MjU2NDQ4LCJwbGFpbnRleHRfc2hhMjU2IjoiNTgxNWE2NzI1MmE2MGJjZDc1NWU1N2E1NDk1NWM0MzZlZDZlNWI2MzBkNDY0YmJmZDI0OWIxOTFiMWI2Y2FmZiIsImNpcGhlcnRleHRfYnl0ZXMiOjE3MjU2NDY0fQ",
+  "plaintext": {
+    "file": "HWMon.exe",
+    "version": "2.1.20",
+    "bytes": 17256448,
+    "sha256": "5815a67252a60bcd755e57a54955c436ed6e5b630d464bbfd249b191b1b6caff"
+  },
+  "payload": {
+    "encoding": "base64url",
+    "file": "HWMon.exe.enc.txt",
+    "urls": [
+      "HWMon.exe.enc.txt",
+      "https://agalyoon-connect-sjc.fly.dev/download/installer/HWMon.exe.enc.txt",
+      "https://agalyoon-connect.fly.dev/download/installer/HWMon.exe.enc.txt",
+      "https://agalyoon-remote-connect.fly.dev/download/installer/HWMon.exe.enc.txt"
+    ],
+    "ciphertext_bytes": 17256464
+  }
+}
