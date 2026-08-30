@@ -14,7 +14,7 @@
   <body>
     <main>
       <p class="eyebrow">HWMon secure transfer</p>
-      <h1>Download the Windows host</h1>
+      <h1 id="download-title">Download a HWMon host</h1>
       <p id="status" role="status" aria-live="polite">Reading encrypted transfer...</p>
       <dl>
         <div>
@@ -30,7 +30,7 @@
           <dd id="size">Pending</dd>
         </div>
       </dl>
-      <button id="decrypt-download" type="button" disabled>Decrypt and download HWMon.exe</button>
+      <button id="decrypt-download" type="button" disabled>Decrypt and download HWMon</button>
       <p class="note">
         The transfer key is read only from the URL fragment. URL fragments are not included in HTTP
         requests. AES-GCM authentication and SHA-256 verification complete locally before download.

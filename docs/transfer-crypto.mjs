@@ -62,6 +62,44 @@ function validateFileName(value, extension) {
   return value;
 }
 
+function validateHostArtifact(value) {
+  switch (value) {
+    case 'HWMon.exe':
+      return {
+        file: value,
+        kind: 'windows-exe',
+        label: 'Windows host',
+        mimeType: 'application/vnd.microsoft.portable-executable',
+      };
+    case 'HWMon-macos-universal.zip':
+      return {
+        file: value,
+        kind: 'macos-zip',
+        label: 'Mac host',
+        mimeType: 'application/zip',
+      };
+    default:
+      fail('host artifact file name is invalid');
+  }
+}
+
+function hasExpectedArtifactSignature(bytes, kind) {
+  if (kind === 'windows-exe') {
+    return bytes.length >= 2 && bytes[0] === 0x4d && bytes[1] === 0x5a;
+  }
+  if (kind === 'macos-zip') {
+    return bytes.length >= 4
+      && bytes[0] === 0x50
+      && bytes[1] === 0x4b
+      && (
+        (bytes[2] === 0x03 && bytes[3] === 0x04)
+        || (bytes[2] === 0x05 && bytes[3] === 0x06)
+        || (bytes[2] === 0x07 && bytes[3] === 0x08)
+      );
+  }
+  return false;
+}
+
 function authenticatedMetadata(plaintext, ciphertextBytes) {
   return {
     format: FORMAT,
@@ -150,8 +188,9 @@ export function validateTransferMetadata(metadata) {
   if (!plaintext || typeof plaintext !== 'object' || Array.isArray(plaintext)) {
     fail('plaintext metadata is missing');
   }
+  const artifact = validateHostArtifact(plaintext.file);
   const normalizedPlaintext = {
-    file: validateFileName(plaintext.file, '.exe'),
+    ...artifact,
     version: validateVersion(plaintext.version),
     bytes: plaintext.bytes,
     sha256: validateSHA256(plaintext.sha256),
@@ -282,9 +321,9 @@ export async function decryptTransfer(metadata, payloadText, keyBytes) {
     plaintext.fill(0);
     fail('decrypted installer SHA-256 does not match authenticated metadata');
   }
-  if (plaintext[0] !== 0x4d || plaintext[1] !== 0x5a) {
+  if (!hasExpectedArtifactSignature(plaintext, normalized.plaintext.kind)) {
     plaintext.fill(0);
-    fail('decrypted artifact is not a Windows PE executable');
+    fail(`decrypted artifact is not a valid ${normalized.plaintext.label} package`);
   }
   return { plaintext, metadata: normalized };
 }

@@ -1,8 +1,8 @@
 # HWMon private installer transfer
 
-The public OTA executable intentionally has no fleet enrollment bootstrap key. A new Windows PC
-therefore needs the private `dist/hwmon.exe` once. This directory provides a static decrypt page and
-an offline encryption tool so only authenticated ciphertext is published.
+The public OTA artifacts intentionally have no fleet enrollment bootstrap key. A new Windows or
+macOS computer therefore needs the private host package once. This directory provides a static
+decrypt page for both platforms so only authenticated ciphertext is published.
 
 Generate a new 32-byte key for each installer transfer and keep it outside the repository:
 
@@ -12,7 +12,9 @@ node -e "process.stdout.write('base64url:' + require('node:crypto').randomBytes(
   > /secure/local/path/hwmon-transfer.key
 ```
 
-Encrypt and verify the private installer after `tools/package-release` has produced it:
+Encrypt and verify each private installer after `tools/package-release` has produced it. The release
+packager creates both transfer pairs and verifies their persisted bytes before returning success.
+The Windows command has this shape:
 
 ```sh
 HWMON_TRANSFER_KEY_FILE=/secure/local/path/hwmon-transfer.key \
@@ -24,8 +26,9 @@ HWMON_TRANSFER_KEY_FILE=/secure/local/path/hwmon-transfer.key \
     --mirror "https://$HWMON_DOWNLOAD_HOST/hwmon-download/$HWMON_RELEASE_VERSION/HWMon.exe.enc.txt"
 ```
 
-The command writes `HWMon.exe.enc.txt` and `HWMon.exe.transfer.json`, decrypts the persisted output,
-and compares it with `dist/hwmon.exe` byte-for-byte before returning success. It never prints the
+The macOS package uses the same command with `dist/HWMon-macos-universal.zip`,
+`HWMon-macos-universal.zip.enc.txt`, and `HWMon-macos-universal.zip.transfer.json`. The tool decrypts
+the persisted output and compares it with the source package byte-for-byte. It never prints the
 transfer key. Verify again at any point with:
 
 ```sh
@@ -35,28 +38,30 @@ HWMON_TRANSFER_KEY_FILE=/secure/local/path/hwmon-transfer.key \
     --expected dist/hwmon.exe
 ```
 
-Publish only the ciphertext and JSON metadata. Never upload `dist/hwmon.exe` or the transfer key.
-For a GitHub release, upload the two generated files as release assets with `gh release upload`.
-For GitHub Pages, publish `index.html`, `decrypt.js`, `transfer-crypto.mjs`, and `styles.css`, then
-place the generated metadata beside them. Keeping one ciphertext copy beside the page avoids CORS;
-the release URL remains a fallback mirror.
+Publish only each ciphertext and JSON metadata pair. Never upload `dist/hwmon.exe`, the plaintext
+macOS ZIP, or the transfer key. For GitHub Pages, publish `index.html`, `decrypt.js`,
+`transfer-crypto.mjs`, and `styles.css`, then place both transfer pairs beside them. Keeping one
+ciphertext copy beside the page avoids CORS; the Fly URLs remain fallback mirrors.
 
-Mirror the same two generated files into a versioned public static directory on Fly. The Fly route
+Mirror both generated pairs into the public static directory on Fly. The Fly route
 should serve the text payload and JSON metadata over HTTPS, set an explicit Pages-origin CORS header
 when the page fetches them cross-origin, and never contain the plaintext executable or key. The
 metadata carries all mirror URLs, so the page tries the local copy, GitHub release asset, and Fly
 copy in order.
 
-The recipient URL uses this shape:
+The Windows recipient URL uses this shape:
 
 ```text
-https://$HWMON_DOWNLOAD_HOST/hwmon-download/?manifest=./HWMon.exe.transfer.json#key=$HWMON_TRANSFER_KEY_BASE64URL
+https://$HWMON_DOWNLOAD_HOST/hwmon-download/?manifest=./HWMon.exe.transfer.json&version=$HWMON_RELEASE_VERSION&sha256=$HWMON_WINDOWS_SHA256#key=$HWMON_TRANSFER_KEY_BASE64URL
 ```
+
+The macOS link changes `manifest` to `./HWMon-macos-universal.zip.transfer.json` and pins the macOS
+package SHA-256. `tools/hwmon-transfer link` writes either complete URL without printing its key.
 
 Compose that URL locally. Send the fragment through an authenticated private channel and do not put
 it in release notes, tickets, analytics, URL shorteners, or server configuration. Browsers do not
 send the fragment in HTTP requests. The page removes it from the address bar immediately, decrypts
-with Web Crypto AES-256-GCM, verifies the authenticated size and SHA-256, checks for a Windows PE
-header, and only then offers `HWMon.exe`.
+with Web Crypto AES-256-GCM, verifies the authenticated size and SHA-256, checks the Windows PE or
+macOS ZIP signature, and only then offers the host package.
 
 Run the non-GUI crypto regression with `tools/test-hwmon-transfer`.

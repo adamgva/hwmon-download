@@ -7,6 +7,7 @@ import {
 } from './transfer-crypto.mjs';
 
 const MAX_METADATA_TEXT = 64 * 1024;
+const titleElement = document.querySelector('#download-title');
 const statusElement = document.querySelector('#status');
 const versionElement = document.querySelector('#version');
 const hashElement = document.querySelector('#sha256');
@@ -93,6 +94,8 @@ async function loadMetadata() {
   const normalized = validatePinnedTransferMetadata(metadata, transferRequest);
   transferMetadata = metadata;
   manifestURL = responseURL;
+  titleElement.textContent = `Download the ${normalized.plaintext.label}`;
+  downloadButton.textContent = `Decrypt and download ${normalized.plaintext.file}`;
   versionElement.textContent = normalized.plaintext.version;
   hashElement.textContent = normalized.plaintext.sha256;
   sizeElement.textContent = `${normalized.plaintext.bytes.toLocaleString()} bytes`;
@@ -120,7 +123,7 @@ async function initialize() {
     transferRequest = pinnedTransferRequestFromSearch(location.search);
     await loadMetadata();
     downloadButton.disabled = false;
-    setStatus('Encrypted installer ready. Decryption stays in this browser.');
+    setStatus('Encrypted host package ready. Decryption stays in this browser.');
   } catch (error) {
     if (transferKey) transferKey.fill(0);
     transferKey = undefined;
@@ -130,13 +133,13 @@ async function initialize() {
 
 downloadButton.addEventListener('click', async () => {
   downloadButton.disabled = true;
-  setStatus('Downloading and authenticating encrypted installer...');
+  setStatus('Downloading and authenticating encrypted host package...');
   try {
     const normalized = validatePinnedTransferMetadata(transferMetadata, transferRequest);
     const payload = await loadEncryptedPayload(normalized);
     const result = await decryptTransfer(transferMetadata, payload, transferKey);
     const blob = new Blob([result.plaintext], {
-      type: 'application/vnd.microsoft.portable-executable',
+      type: result.metadata.plaintext.mimeType,
     });
     const objectURL = URL.createObjectURL(blob);
     const link = document.createElement('a');
