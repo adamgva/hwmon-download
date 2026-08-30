@@ -3,15 +3,15 @@
   "format_version": 1,
   "cipher": {
     "name": "AES-256-GCM",
-    "nonce_base64url": "q81UDM_eLo9RR6nB",
+    "nonce_base64url": "G77NBPCUHLsCyFIy",
     "tag_bits": 128
   },
-  "authenticated_metadata_base64url": "eyJmb3JtYXQiOiJod21vbi1wcml2YXRlLWluc3RhbGxlci10cmFuc2ZlciIsImZvcm1hdF92ZXJzaW9uIjoxLCJjaXBoZXIiOiJBRVMtMjU2LUdDTSIsInRhZ19iaXRzIjoxMjgsInBsYWludGV4dF9maWxlIjoiSFdNb24uZXhlIiwicGxhaW50ZXh0X3ZlcnNpb24iOiIyLjEuMTkiLCJwbGFpbnRleHRfYnl0ZXMiOjE3MjU2NDQ4LCJwbGFpbnRleHRfc2hhMjU2IjoiZTdjMWRkOGU2M2JmODEwNjVhNjA4YWM5OTRlMTRhNGRlN2Q0N2MyYWEyZTRiNWQ1ODAwMGYwNWNhZGFlZmYwYSIsImNpcGhlcnRleHRfYnl0ZXMiOjE3MjU2NDY0fQ",
+  "authenticated_metadata_base64url": "eyJmb3JtYXQiOiJod21vbi1wcml2YXRlLWluc3RhbGxlci10cmFuc2ZlciIsImZvcm1hdF92ZXJzaW9uIjoxLCJjaXBoZXIiOiJBRVMtMjU2LUdDTSIsInRhZ19iaXRzIjoxMjgsInBsYWludGV4dF9maWxlIjoiSFdNb24uZXhlIiwicGxhaW50ZXh0X3ZlcnNpb24iOiIyLjEuMjAiLCJwbGFpbnRleHRfYnl0ZXMiOjE3MjU2NDQ4LCJwbGFpbnRleHRfc2hhMjU2IjoiNTgxNWE2NzI1MmE2MGJjZDc1NWU1N2E1NDk1NWM0MzZlZDZlNWI2MzBkNDY0YmJmZDI0OWIxOTFiMWI2Y2FmZiIsImNpcGhlcnRleHRfYnl0ZXMiOjE3MjU2NDY0fQ",
   "plaintext": {
     "file": "HWMon.exe",
-    "version": "2.1.19",
+    "version": "2.1.20",
     "bytes": 17256448,
-    "sha256": "e7c1dd8e63bf81065a608ac994e14a4de7d47c2aa2e4b5d58000f05cadaeff0a"
+    "sha256": "5815a67252a60bcd755e57a54955c436ed6e5b630d464bbfd249b191b1b6caff"
   },
   "payload": {
     "encoding": "base64url",
